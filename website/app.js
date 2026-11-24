@@ -179,7 +179,7 @@ function renderSetup() {
   if (S.set === "custom") {
     const lines = local.get("custom." + S.lang, []);
     if (document.activeElement !== $("custom")) $("custom").value = lines.join("\n");
-    $("custom-count").textContent = t("custom_count", { n: lines.length });
+    $("custom-count").textContent = t(lines.length === 1 ? "custom_count_one" : "custom_count", { n: lines.length });
   }
 }
 
@@ -254,7 +254,7 @@ async function renderExport() {
   const secs = takes.reduce((a, m) => a + m.seconds, 0);
   const flagged = takes.filter((m) => m.flags.some((f) => f !== "noisy")).length;
   $("export-stats").textContent = takes.length
-    ? t("export_stats", { n: takes.length, dur: fmtDur(secs) }) + (flagged ? " · " + t("export_flagged", { n: flagged }) : "")
+    ? t(takes.length === 1 ? "export_stats_one" : "export_stats", { n: takes.length, dur: fmtDur(secs) }) + (flagged ? " · " + t("export_flagged", { n: flagged }) : "")
     : t("export_none");
   $("download").disabled = !takes.length || S.exporting;
   $("delete").hidden = !takes.length;
@@ -762,7 +762,7 @@ function wire() {
 
   $("custom").addEventListener("input", (e) => {
     const n = e.target.value.split("\n").filter((s) => s.trim()).length;
-    $("custom-count").textContent = t("custom_count", { n });
+    $("custom-count").textContent = t(n === 1 ? "custom_count_one" : "custom_count", { n });
   });
   $("custom-use").addEventListener("click", async () => {
     const seen = new Set();
