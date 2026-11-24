@@ -37,7 +37,7 @@ const S = {
   savedNote: null,
 };
 // Microphone state
-const M = { ctx: null, stream: null, src: null, node: null, sink: null, recording: false, stopping: false, chunks: [], peaks: [], t0: 0, timer: 0, hold: -120, holdAt: 0 };
+const M = { ctx: null, stream: null, src: null, node: null, sink: null, recording: false, stopping: false, chunks: [], trace: [], recTrace: [], t0: 0, timer: 0, hold: -120, holdAt: 0 };
 let player = null;
 let persisted = false;
 
@@ -68,6 +68,7 @@ function buildItems() {
     id: "consent",
     text: d.consent.replace("{name}", S.name.trim() || "[" + t("name_needed") + "]"),
     label: t("consent"),
+    tpl: d.consent,
     note: t("consent_note"),
   }];
   if (S.set === "custom") {
@@ -189,7 +190,12 @@ function renderItem() {
   $("part-label").textContent = item ? item.label : "";
   $("counter").textContent = item ? `${S.idx + 1} / ${S.items.length}` : "";
   $("note").textContent = item ? item.note : "";
-  $("sentence").textContent = item ? item.text : "";
+  const sentence = $("sentence");
+  if (item && item.tpl && !S.name.trim()) {
+    const [before, after = ""] = item.tpl.split("{name}");
+    const blank = Object.assign(document.createElement("span"), { className: "blank", title: t("name") });
+    sentence.replaceChildren(before, blank, after);
+  } else sentence.textContent = item ? item.text : "";
   $("sentence").lang = S.lang;
   $("prev").disabled = M.recording || S.idx <= 0;
   $("next").disabled = M.recording || S.idx >= S.items.length - 1;
@@ -309,50 +315,56 @@ function canvas() {
   return { g, w, h, color: (v) => css.getPropertyValue(v).trim() };
 }
 
-function drawSamples(x, scale, colorVar = "--accent") {
+// Everything on the waveform strip is drawn as bars: the live input (muted) while the mic listens,
+// the take in red while recording, and the saved take (blue, or amber with a warning) afterwards.
+const BAR = 3; // px per bar, 2 px of ink and 1 px of gap
+const height = (pk) => Math.max(0, Math.min(1, (20 * Math.log10(pk + 1e-9) + 54) / 54));
+
+function drawBars(values, slots, colorVar, alignRight) {
   const { g, w, h, color } = canvas();
   g.fillStyle = color("--line");
-  g.fillRect(0, h / 2, w, 1);
-  if (!x) return;
+  g.fillRect(0, Math.round(h / 2), w, 1);
+  if (!values || !values.length) return;
   g.fillStyle = color(colorVar);
-  const step = x.length / w;
-  for (let px = 0; px < w; px++) {
-    let lo = 0;
-    let hi = 0;
-    const a = Math.floor(px * step);
-    const b = Math.min(x.length, Math.floor((px + 1) * step) + 1);
-    for (let i = a; i < b; i++) {
-      const v = x[i] * scale;
-      if (v < lo) lo = v;
-      else if (v > hi) hi = v;
-    }
-    const y1 = h / 2 - hi * (h / 2 - 3);
-    const y2 = h / 2 - lo * (h / 2 - 3);
-    g.fillRect(px, y1, 1, Math.max(1, y2 - y1));
-  }
+  const bw = w / slots;
+  const offset = alignRight ? slots - values.length : 0;
+  values.forEach((pk, i) => {
+    const a = height(pk) * (h / 2 - 2);
+    if (a < 0.5) return;
+    g.fillRect((offset + i) * bw, h / 2 - a, Math.max(1, bw - 1), a * 2);
+  });
 }
 
 let drawToken = 0;
 async function drawTake(item) {
   const token = ++drawToken;
   const tk = item && takeOf(item);
-  if (!tk) return drawSamples(null);
+  if (!tk) return drawTrace();
   const buf = await store.audio(tk.key);
   if (token !== drawToken || !buf) return;
-  drawSamples(new Int16Array(buf), 1 / 32768, isStale(item) || tk.flags.some((f) => f !== "noisy") ? "--warn" : "--accent");
+  const x = new Int16Array(buf);
+  const slots = Math.max(1, Math.floor($("wave").clientWidth / BAR));
+  const step = x.length / slots;
+  const peaks = [];
+  for (let b = 0; b < slots; b++) {
+    let pk = 0;
+    for (let i = Math.floor(b * step), e = Math.min(x.length, Math.floor((b + 1) * step)); i < e; i++) {
+      const v = x[i] < 0 ? -x[i] : x[i];
+      if (v > pk) pk = v;
+    }
+    peaks.push(pk / 32768);
+  }
+  drawBars(peaks, slots, isStale(item) || tk.flags.some((f) => f !== "noisy") ? "--warn" : "--accent");
 }
 
-function drawLive() {
-  const { g, w, h, color } = canvas();
-  g.fillStyle = color("--line");
-  g.fillRect(0, h / 2, w, 1);
-  g.fillStyle = color("--rec");
-  const n = Math.max(M.peaks.length, 160);
-  const bw = w / n;
-  M.peaks.forEach((p, i) => {
-    const a = Math.min(1, p) * (h / 2 - 3);
-    g.fillRect(i * bw, h / 2 - a, Math.max(1, bw - 1), Math.max(1, a * 2));
-  });
+let traceQueued = false;
+function drawTrace() {
+  traceQueued = false;
+  const slots = Math.max(1, Math.floor($("wave").clientWidth / BAR));
+  if (M.recording) return drawBars(M.recTrace, Math.max(M.recTrace.length, slots * 2), "--rec");
+  const item = S.items[S.idx];
+  if (item && takeOf(item)) return;
+  drawBars(M.node ? M.trace.slice(-slots) : null, slots, "--faint", true);
 }
 
 /* ---------- microphone ---------- */
@@ -448,10 +460,6 @@ function onTap(e) {
   if (d.pk !== undefined) meter(d.pk);
   else if (d.buf) {
     M.chunks.push(d.buf);
-    let pk = 0;
-    for (let i = 0; i < d.buf.length; i++) pk = Math.max(pk, Math.abs(d.buf[i]));
-    M.peaks.push(pk);
-    if (M.recording) drawLive();
   } else if (d.stopped) finish();
 }
 
@@ -468,6 +476,13 @@ function meter(pk) {
   bar.classList.toggle("hot", db > -1);
   $("meter-hold").style.left = `calc(${pos(M.hold)}% - 1px)`;
   $("meter-db").textContent = db < -59 ? "–∞" : fmtDb(M.hold) + " dB";
+  M.trace.push(pk);
+  if (M.trace.length > 600) M.trace.splice(0, M.trace.length - 400);
+  if (M.recording) M.recTrace.push(pk);
+  if (!traceQueued) {
+    traceQueued = true;
+    requestAnimationFrame(drawTrace);
+  }
 }
 
 /* ---------- recording ---------- */
@@ -486,7 +501,7 @@ function startRec() {
   }
   stopPlayback();
   M.chunks = [];
-  M.peaks = [];
+  M.recTrace = [];
   M.recording = true;
   M.t0 = performance.now();
   S.lastFlags = null;
@@ -496,8 +511,8 @@ function startRec() {
     renderStatus();
     if (performance.now() - M.t0 > 45000) stopRec(); // nobody reads a sentence for 45 s; a forgotten take
   }, 100);
-  drawLive();
   renderItem();
+  drawTrace();
 }
 
 function stopRec() {

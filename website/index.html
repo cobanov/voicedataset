@@ -37,7 +37,7 @@
 
 <main>
   <section class="hero shell">
-    <h1 data-i18n="title">Record your own voice dataset.</h1>
+    <h1 data-i18n="title">Record your own voice dataset</h1>
     <p class="lead" data-i18n="lead"></p>
     <p class="fine" data-i18n="fine"></p>
   </section>
@@ -72,7 +72,7 @@
         <span class="label" data-i18n="mic">Microphone</span>
         <div class="mic-row">
           <select id="mic" hidden aria-label="Microphone"></select>
-          <button type="button" class="button primary" id="mic-btn" data-i18n="mic_enable">Enable microphone</button>
+          <button type="button" class="button ink" id="mic-btn" data-i18n="mic_enable">Enable microphone</button>
           <div class="meter-wrap" id="meter-wrap" hidden>
             <div class="meter" title=""><i class="zone"></i><i class="bar" id="meter-bar"></i><i class="hold" id="meter-hold"></i></div>
             <span class="meter-db" id="meter-db">–∞</span>
@@ -92,7 +92,7 @@
       <canvas class="wave" id="wave" aria-hidden="true"></canvas>
       <div class="controls">
         <button type="button" class="button icon" id="prev"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <button type="button" class="button rec" id="rec"><i class="rec-icon"></i><span id="rec-label">Record</span><kbd id="rec-key">Space</kbd></button>
+        <button type="button" class="button rec ink" id="rec"><i class="rec-icon"></i><span id="rec-label">Record</span><kbd id="rec-key">Space</kbd></button>
         <button type="button" class="button" id="play"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 4.8v10.4L15 10z" fill="currentColor"/></svg><span data-i18n="play">Play</span><kbd>P</kbd></button>
         <button type="button" class="button icon" id="next"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4.5 13 10l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
@@ -112,7 +112,7 @@
         </div>
         <div class="export-actions">
           <label class="field inline"><span class="label" data-i18n="export_rate">Sample rate</span><select id="rate"></select></label>
-          <button type="button" class="button primary" id="download"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5v9m0 0-3.8-3.8M10 12.5l3.8-3.8M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="download-label">Download ZIP</span></button>
+          <button type="button" class="button" id="download"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5v9m0 0-3.8-3.8M10 12.5l3.8-3.8M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="download-label">Download ZIP</span></button>
         </div>
       </div>
       <p class="fine export-note" id="export-note"></p>
