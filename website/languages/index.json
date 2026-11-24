@@ -1,0 +1,19 @@
+{
+  "languages": [
+    {
+      "code": "en",
+      "name": "English",
+      "nativeName": "English"
+    },
+    {
+      "code": "tr",
+      "name": "Turkish",
+      "nativeName": "Türkçe"
+    },
+    {
+      "code": "de",
+      "name": "German",
+      "nativeName": "Deutsch"
+    }
+  ]
+}

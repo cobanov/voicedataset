@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>voicedataset · Record your own voice dataset</title>
+<meta name="description" content="Record a clean voice dataset in your browser, sentence by sentence, and download it as a ready-to-train ZIP. English, Turkish and German. Nothing is uploaded.">
+<meta property="og:title" content="voicedataset · Record your own voice dataset">
+<meta property="og:description" content="Read sentences aloud in your browser and download a clean, ready-to-train voice dataset. Nothing is uploaded.">
+<meta property="og:url" content="https://voicedataset.cobanov.dev/">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1116" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="site.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#app">Skip to the recorder</a>
+
+<header class="masthead">
+  <div class="shell nav-inner">
+    <a class="wordmark" href="/">
+      <svg class="logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="1.5" y="9" width="2.6" height="6" rx="1.3"/><rect x="6.1" y="5" width="2.6" height="14" rx="1.3"/><rect x="10.7" y="2" width="2.6" height="20" rx="1.3"/><rect x="15.3" y="6.5" width="2.6" height="11" rx="1.3"/><rect x="19.9" y="9.5" width="2.6" height="5" rx="1.3"/></svg>
+      <span>voicedataset</span>
+    </a>
+    <nav>
+      <a class="nav-link hide-sm" href="#how" data-i18n="nav_how">How it works</a>
+      <a class="nav-link hide-sm" href="https://github.com/cobanov/voicedataset/blob/main/CONTRIBUTING.md" data-i18n="nav_add">Add a language</a>
+      <a class="nav-link icon-link" href="https://github.com/cobanov/voicedataset" aria-label="GitHub">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg>
+      </a>
+      <select id="ui-lang" class="ui-lang" aria-label="Interface language"></select>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero shell">
+    <h1 data-i18n="title">Record your own voice dataset.</h1>
+    <p class="lead" data-i18n="lead"></p>
+    <p class="fine" data-i18n="fine"></p>
+  </section>
+
+  <section class="shell app" id="app">
+    <div class="panel setup">
+      <div class="setup-grid">
+        <label class="field">
+          <span class="label" data-i18n="name">Your name</span>
+          <input id="name" type="text" autocomplete="given-name" maxlength="40" spellcheck="false">
+        </label>
+        <label class="field">
+          <span class="label" data-i18n="lang">Language</span>
+          <select id="lang"></select>
+        </label>
+        <div class="field field-wide">
+          <span class="label" data-i18n="set">Sentences</span>
+          <div class="seg" id="set" role="radiogroup">
+            <button type="button" role="radio" data-set="quick"><b data-i18n="set_quick">Quick</b><small></small></button>
+            <button type="button" role="radio" data-set="full"><b data-i18n="set_full">Full</b><small></small></button>
+            <button type="button" role="radio" data-set="custom"><b data-i18n="set_custom">My own</b><small></small></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="custom-box" id="custom-box" hidden>
+        <textarea id="custom" rows="6" spellcheck="false"></textarea>
+        <div class="custom-row"><span class="faint" id="custom-count"></span><button type="button" class="button" id="custom-use" data-i18n="custom_use">Use these sentences</button></div>
+      </div>
+
+      <div class="mic">
+        <span class="label" data-i18n="mic">Microphone</span>
+        <div class="mic-row">
+          <select id="mic" hidden aria-label="Microphone"></select>
+          <button type="button" class="button primary" id="mic-btn" data-i18n="mic_enable">Enable microphone</button>
+          <div class="meter-wrap" id="meter-wrap" hidden>
+            <div class="meter" title=""><i class="zone"></i><i class="bar" id="meter-bar"></i><i class="hold" id="meter-hold"></i></div>
+            <span class="meter-db" id="meter-db">–∞</span>
+          </div>
+        </div>
+        <p class="mic-info" id="mic-info"></p>
+      </div>
+    </div>
+
+    <div class="panel recorder" id="recorder">
+      <div class="rec-head">
+        <span id="part-label"></span>
+        <span class="counter" id="counter"></span>
+      </div>
+      <p class="note" id="note"></p>
+      <p class="sentence" id="sentence"></p>
+      <canvas class="wave" id="wave" aria-hidden="true"></canvas>
+      <div class="controls">
+        <button type="button" class="button icon" id="prev"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button type="button" class="button rec" id="rec"><i class="rec-icon"></i><span id="rec-label">Record</span><kbd id="rec-key">Space</kbd></button>
+        <button type="button" class="button" id="play"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 4.8v10.4L15 10z" fill="currentColor"/></svg><span data-i18n="play">Play</span><kbd>P</kbd></button>
+        <button type="button" class="button icon" id="next"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4.5 13 10l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="panel progress">
+      <div class="progress-head"><strong id="progress-label"></strong><span class="faint keys" data-i18n="keys"></span></div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="panel export">
+      <div class="export-head">
+        <div>
+          <h2 data-i18n="export_title">Your dataset</h2>
+          <p class="muted" id="export-stats"></p>
+        </div>
+        <div class="export-actions">
+          <label class="field inline"><span class="label" data-i18n="export_rate">Sample rate</span><select id="rate"></select></label>
+          <button type="button" class="button primary" id="download"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5v9m0 0-3.8-3.8M10 12.5l3.8-3.8M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="download-label">Download ZIP</span></button>
+        </div>
+      </div>
+      <p class="fine export-note" id="export-note"></p>
+      <button type="button" class="linklike danger" id="delete" data-i18n="delete">Delete these recordings</button>
+    </div>
+  </section>
+
+  <section class="shell how" id="how">
+    <h2 data-i18n="how_title">How it works</h2>
+    <ol class="steps">
+      <li><strong data-i18n="how1_t"></strong><span data-i18n="how1"></span></li>
+      <li><strong data-i18n="how2_t"></strong><span data-i18n="how2"></span></li>
+      <li><strong data-i18n="how3_t"></strong><span data-i18n="how3"></span></li>
+    </ol>
+    <div class="two">
+      <div>
+        <h3 data-i18n="tips_title"></h3>
+        <ul class="tips" id="tips"></ul>
+      </div>
+      <div>
+        <h3 data-i18n="zip_title"></h3>
+        <pre class="tree" id="tree"></pre>
+        <p class="muted small" data-i18n="zip_note"></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="shell footer-inner">
+  <span><span data-i18n="footer">Code MIT · Sentences CC0 · Made by</span> <a href="https://cobanov.dev">cobanov.dev</a></span>
+  <nav>
+    <a href="https://github.com/cobanov/voicedataset" data-i18n="source">Source</a>
+    <a href="https://github.com/cobanov/voicedataset/blob/main/CONTRIBUTING.md" data-i18n="nav_add">Add a language</a>
+  </nav>
+</footer>
+</body>
+</html>

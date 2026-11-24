@@ -1,0 +1,16 @@
+name: Check reading scripts
+on:
+  pull_request:
+    paths: ["website/languages/**", "scripts/validate.mjs"]
+  push:
+    branches: [main]
+    paths: ["website/languages/**", "scripts/validate.mjs"]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/validate.mjs

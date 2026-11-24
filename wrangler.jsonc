@@ -1,0 +1,13 @@
+// Static site on Cloudflare Workers (assets only, no Worker code): npx wrangler deploy
+{
+  "name": "voicedataset",
+  "account_id": "c7127d8fc0f65ab18ec12bdd78dd3859",
+  "compatibility_date": "2026-11-24",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./website",
+    "html_handling": "drop-trailing-slash"
+  },
+  "routes": [{ "pattern": "voicedataset.cobanov.dev", "custom_domain": true }]
+}
